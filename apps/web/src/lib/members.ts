@@ -36,12 +36,14 @@ export async function createMember(
     Partial<Omit<Member, "id" | "first_name" | "last_name" | "email" | "membership_number" | "created_at" | "updated_at">>
 ): Promise<Member> {
   const db = getDb();
+  const organizationId = process.env.ORGANIZATION_ID ?? null;
   const result = await db.query<Member>(
-    `INSERT INTO profiles (id, first_name, last_name, email, phone, birth_date, address, joined_at, status, avatar_url)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, CURRENT_DATE), COALESCE($9, 'active'), $10)
+    `INSERT INTO profiles (id, organization_id, first_name, last_name, email, phone, birth_date, address, joined_at, status, avatar_url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, CURRENT_DATE), COALESCE($10, 'active'), $11)
      RETURNING *`,
     [
       data.id,
+      data.organization_id ?? organizationId,
       data.first_name,
       data.last_name,
       data.email,
