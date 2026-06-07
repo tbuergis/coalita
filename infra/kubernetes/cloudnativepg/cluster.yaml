@@ -4,7 +4,7 @@ metadata:
   name: coalita-db
   namespace: coalita
 spec:
-  instances: 1  # Für Produktion auf 3 erhöhen (Primary + 2 Replicas)
+  instances: 3
 
   postgresql:
     parameters:
