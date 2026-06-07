@@ -1,10 +1,24 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@coalita/ui";
-import { getMember, getMemberFees } from "@/lib/members";
+import { getMember, getMemberFees, getChildrenOf } from "@/lib/members";
+import { getDb } from "@/lib/db";
+import type { Member } from "@coalita/db";
 
 interface MemberDetailPageProps {
   params: { id: string };
+}
+
+async function getGuardiansOf(childId: string): Promise<(Pick<Member, "id" | "first_name" | "last_name"> & { relationship: string })[]> {
+  const db = getDb();
+  const result = await db.query<Pick<Member, "id" | "first_name" | "last_name"> & { relationship: string }>(
+    `SELECT p.id, p.first_name, p.last_name, g.relationship
+     FROM profiles p
+     JOIN guardians g ON g.guardian_id = p.id
+     WHERE g.child_id = $1`,
+    [childId]
+  );
+  return result.rows;
 }
 
 export default async function MemberDetailPage({ params }: MemberDetailPageProps) {
@@ -14,6 +28,11 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   ]);
 
   if (!member) notFound();
+
+  const [children, guardians] = await Promise.all([
+    member.is_minor ? [] : getChildrenOf(params.id),
+    member.is_minor ? getGuardiansOf(params.id) : [],
+  ]);
 
   const unpaidFees = fees.filter((f) => !f.paid_at);
   const totalUnpaid = unpaidFees.reduce((sum, f) => sum + Number(f.amount), 0);
@@ -31,9 +50,16 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
         <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200 shadow-sm p-8">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {member.first_name} {member.last_name}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {member.first_name} {member.last_name}
+                </h2>
+                {member.is_minor && (
+                  <span className="text-xs font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                    Jugendmitglied
+                  </span>
+                )}
+              </div>
               <p className="text-sm font-mono text-gray-400 mt-1">
                 {member.membership_number}
               </p>
@@ -74,7 +100,46 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
                 </dd>
               </div>
             )}
+            {member.notes && (
+              <div className="col-span-2">
+                <dt className="text-gray-500">Notizen</dt>
+                <dd className="text-gray-900">{member.notes}</dd>
+              </div>
+            )}
           </dl>
+
+          {/* Erziehungsberechtigte (bei Jugendlichen) */}
+          {guardians.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Erziehungsberechtigte</h3>
+              <ul className="space-y-2">
+                {guardians.map((g) => (
+                  <li key={g.id} className="flex items-center justify-between text-sm">
+                    <Link href={`/members/${g.id}`} className="text-blue-600 hover:underline font-medium">
+                      {g.last_name} {g.first_name}
+                    </Link>
+                    <span className="text-gray-400">{g.relationship}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Kinder/Jugendliche (bei Erziehungsberechtigten) */}
+          {children.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Jugendmitglieder</h3>
+              <ul className="space-y-2">
+                {children.map((c) => (
+                  <li key={c.id}>
+                    <Link href={`/members/${c.id}`} className="text-sm text-blue-600 hover:underline font-medium">
+                      {c.last_name} {c.first_name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Beitrags-Übersicht */}
