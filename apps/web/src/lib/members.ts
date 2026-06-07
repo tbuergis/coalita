@@ -2,8 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { getDb } from "./db";
+import { createZitadelUser, lockZitadelUser, unlockZitadelUser } from "./zitadel";
 import { type Member, type MembershipFee, type Guardian, type Role, type MemberRole } from "@coalita/db";
-import { randomUUID } from "crypto";
 
 const ORG_ID = process.env.ORGANIZATION_ID ?? null;
 
@@ -83,8 +83,8 @@ export async function createMember(
 ): Promise<Member> {
   const db = getDb();
   const result = await db.query<Member>(
-    `INSERT INTO profiles (id, organization_id, first_name, last_name, email, phone, birth_date, address, joined_at, status, avatar_url, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, CURRENT_DATE), COALESCE($10, 'active'), $11, $12)
+    `INSERT INTO profiles (id, organization_id, first_name, last_name, email, phone, birth_date, address, joined_at, status, avatar_url, notes, can_login)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, CURRENT_DATE), COALESCE($10, 'active'), $11, $12, COALESCE($13, true))
      RETURNING *`,
     [
       data.id,
@@ -99,6 +99,7 @@ export async function createMember(
       data.status ?? null,
       data.avatar_url ?? null,
       data.notes ?? null,
+      data.can_login ?? true,
     ]
   );
   return result.rows[0];
@@ -130,50 +131,82 @@ export async function assignRole(
   const db = getDb();
   await db.query(
     `INSERT INTO member_roles (id, profile_id, role_id, organization_id, valid_from, valid_until)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-    [randomUUID(), profileId, roleId, ORG_ID, validFrom, validUntil ?? null]
+     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+    [profileId, roleId, ORG_ID, validFrom, validUntil ?? null]
   );
 }
 
+export async function setMemberCanLogin(memberId: string, canLogin: boolean): Promise<void> {
+  const db = getDb();
+  await db.query(`UPDATE profiles SET can_login = $1 WHERE id = $2`, [canLogin, memberId]);
+  if (canLogin) {
+    await unlockZitadelUser(memberId);
+  } else {
+    await lockZitadelUser(memberId);
+  }
+}
+
 export async function createMemberFromForm(formData: FormData): Promise<void> {
+  const firstName = formData.get("first_name") as string;
+  const lastName = formData.get("last_name") as string;
+  const email = formData.get("email") as string;
+  const birthDate = (formData.get("birth_date") as string) || undefined;
+  const guardianId = (formData.get("guardian_id") as string) || null;
+  const relationship = (formData.get("relationship") as string) || "Erziehungsberechtigte/r";
+  const canLoginRaw = formData.get("can_login") as string | null;
+  const sendInvite = formData.get("send_invite") === "1";
+
+  // Determine if minor from birth date
+  let isMinor = false;
+  if (birthDate) {
+    const dob = new Date(birthDate);
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 18);
+    isMinor = dob > cutoff;
+  }
+
+  // Server-side guard: minor without guardian
+  if (isMinor && !guardianId) {
+    throw new Error("Jugendmitglieder benötigen einen Erziehungsberechtigten.");
+  }
+
+  const canLogin = isMinor ? canLoginRaw === "1" : true;
+
   const street = formData.get("street") as string | null;
   const zip = formData.get("zip") as string | null;
   const city = formData.get("city") as string | null;
   const country = formData.get("country") as string | null;
-  const birthDate = (formData.get("birth_date") as string) || undefined;
-  const isMinorRaw = formData.get("is_minor") as string | null;
-  const guardianId = (formData.get("guardian_id") as string) || null;
-  const relationship = (formData.get("relationship") as string) || "Erziehungsberechtigte/r";
-
-  // Server-side age validation for non-minor registrations
-  if (!isMinorRaw && birthDate) {
-    const dob = new Date(birthDate);
-    const minAge = new Date();
-    minAge.setFullYear(minAge.getFullYear() - 18);
-    if (dob > minAge) {
-      throw new Error("Minderjährige müssen als Jugendmitglied mit Erziehungsberechtigtem erfasst werden.");
-    }
-  }
-
   const address =
     street && zip && city
       ? { street, zip, city, country: country || "CH" }
       : undefined;
 
+  // Create Zitadel user first to get the ID
+  const username = `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}`;
+  const zitadelId = await createZitadelUser({
+    username,
+    firstName,
+    lastName,
+    email,
+    emailVerified: false,
+    sendInvite: sendInvite && canLogin,
+    canLogin,
+  });
+
   const member = await createMember({
-    id: randomUUID(),
-    first_name: formData.get("first_name") as string,
-    last_name: formData.get("last_name") as string,
-    email: formData.get("email") as string,
+    id: zitadelId,
+    first_name: firstName,
+    last_name: lastName,
+    email,
     phone: (formData.get("phone") as string) || undefined,
     birth_date: birthDate,
     status: (formData.get("status") as Member["status"]) || "active",
     address,
     notes: (formData.get("notes") as string) || undefined,
+    can_login: canLogin,
   });
 
-  // Link guardian if this is a minor
-  if (isMinorRaw && guardianId) {
+  if (isMinor && guardianId) {
     await addGuardianRelation(guardianId, member.id, relationship, true);
   }
 

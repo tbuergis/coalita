@@ -48,6 +48,7 @@ export interface Member {
   membership_number: string;
   avatar_url?: string;
   is_minor: boolean;
+  can_login: boolean;
   notes?: string;
   created_at: string;
   updated_at: string;
