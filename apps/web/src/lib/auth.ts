@@ -8,7 +8,7 @@ export const authOptions: NextAuthOptions = {
       type: "oauth",
       issuer: process.env.ZITADEL_ISSUER,
       clientId: process.env.ZITADEL_CLIENT_ID!,
-      clientSecret: process.env.ZITADEL_CLIENT_SECRET!,
+      clientSecret: "unused", // PKCE flow – kein echtes Secret nötig
       wellKnown: `${process.env.ZITADEL_ISSUER}/.well-known/openid-configuration`,
       authorization: {
         params: {
@@ -17,10 +17,15 @@ export const authOptions: NextAuthOptions = {
       },
       idToken: true,
       checks: ["pkce", "state"],
+      client: {
+        token_endpoint_auth_method: "none", // PKCE: kein Client Secret
+      },
       profile(profile) {
         return {
           id: profile.sub,
-          name: profile.name ?? profile.preferred_username,
+          name:
+            profile.name ??
+            `${profile.given_name ?? ""} ${profile.family_name ?? ""}`.trim(),
           email: profile.email,
           image: profile.picture,
         };
