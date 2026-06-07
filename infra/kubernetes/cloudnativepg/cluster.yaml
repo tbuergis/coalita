@@ -1,0 +1,38 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: coalita-db
+  namespace: coalita
+spec:
+  instances: 1  # Für Produktion auf 3 erhöhen (Primary + 2 Replicas)
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: "256MB"
+      work_mem: "4MB"
+      timezone: "Europe/Zurich"
+
+  bootstrap:
+    initdb:
+      database: coalita
+      owner: coalita
+      secret:
+        name: coalita-db-app
+      postInitSQL:
+        - CREATE EXTENSION IF NOT EXISTS "pgcrypto"
+
+  superuserSecret:
+    name: coalita-db-superuser
+
+  storage:
+    size: 10Gi
+    storageClass: local-path
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"

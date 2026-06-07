@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: coalita-db-schema-init
+  namespace: coalita
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: schema-init
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - |
+              PGPASSWORD=$DB_PASSWORD psql \
+                -h coalita-db-rw.coalita.svc.cluster.local \
+                -U $DB_USER \
+                -d coalita \
+                -f /sql/schema.sql
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: coalita-db-app
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: coalita-db-app
+                  key: password
+          volumeMounts:
+            - name: schema
+              mountPath: /sql
+      volumes:
+        - name: schema
+          configMap:
+            name: coalita-db-schema
