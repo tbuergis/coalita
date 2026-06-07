@@ -1,7 +1,9 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { getDb } from "./db";
 import { type Member, type MembershipFee } from "@coalita/db";
+import { randomUUID } from "crypto";
 
 export async function getMembers(): Promise<Member[]> {
   const db = getDb();
@@ -52,6 +54,31 @@ export async function createMember(
     ]
   );
   return result.rows[0];
+}
+
+export async function createMemberFromForm(formData: FormData): Promise<void> {
+  const street = formData.get("street") as string | null;
+  const zip = formData.get("zip") as string | null;
+  const city = formData.get("city") as string | null;
+  const country = formData.get("country") as string | null;
+
+  const address =
+    street && zip && city
+      ? { street, zip, city, country: country || "CH" }
+      : undefined;
+
+  const member = await createMember({
+    id: randomUUID(),
+    first_name: formData.get("first_name") as string,
+    last_name: formData.get("last_name") as string,
+    email: formData.get("email") as string,
+    phone: (formData.get("phone") as string) || undefined,
+    birth_date: (formData.get("birth_date") as string) || undefined,
+    status: (formData.get("status") as Member["status"]) || "active",
+    address,
+  });
+
+  redirect(`/members/${member.id}`);
 }
 
 export async function updateMember(
