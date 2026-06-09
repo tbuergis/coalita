@@ -84,7 +84,7 @@ export async function createMember(
   const db = getDb();
   const result = await db.query<Member>(
     `INSERT INTO profiles (id, organization_id, first_name, last_name, email, phone, birth_date, address, joined_at, status, avatar_url, notes, can_login)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, CURRENT_DATE), COALESCE($10, 'active'), $11, $12, COALESCE($13, true))
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, CURRENT_DATE), COALESCE($10::member_status, 'active'), $11, $12, COALESCE($13, true))
      RETURNING *`,
     [
       data.id,
