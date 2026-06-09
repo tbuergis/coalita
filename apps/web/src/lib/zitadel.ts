@@ -3,6 +3,18 @@
 const ISSUER = process.env.ZITADEL_ISSUER!;
 const PAT = process.env.ZITADEL_SERVICE_ACCOUNT_TOKEN!;
 
+// Zitadel Cloud: API endpoint is the instance domain, custom domain sent as header
+const ZITADEL_API = process.env.ZITADEL_API_URL ?? ISSUER;
+const ZITADEL_DOMAIN = new URL(ISSUER).hostname;
+
+function zitadelHeaders(): HeadersInit {
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${PAT}`,
+    "x-zitadel-domain": ZITADEL_DOMAIN,
+  };
+}
+
 interface CreateHumanUserParams {
   username: string;
   firstName: string;
@@ -31,12 +43,9 @@ export async function createZitadelUser(params: CreateHumanUserParams): Promise<
     },
   };
 
-  const resp = await fetch(`${ISSUER}/v2/users/human`, {
+  const resp = await fetch(`${ZITADEL_API}/v2/users/human`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${PAT}`,
-    },
+    headers: zitadelHeaders(),
     body: JSON.stringify(body),
   });
 
@@ -56,12 +65,9 @@ export async function createZitadelUser(params: CreateHumanUserParams): Promise<
 }
 
 export async function lockZitadelUser(userId: string): Promise<void> {
-  const resp = await fetch(`${ISSUER}/v2/users/${userId}/lock`, {
+  const resp = await fetch(`${ZITADEL_API}/v2/users/${userId}/lock`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${PAT}`,
-    },
+    headers: zitadelHeaders(),
     body: JSON.stringify({}),
   });
 
@@ -72,12 +78,9 @@ export async function lockZitadelUser(userId: string): Promise<void> {
 }
 
 export async function unlockZitadelUser(userId: string): Promise<void> {
-  const resp = await fetch(`${ISSUER}/v2/users/${userId}/unlock`, {
+  const resp = await fetch(`${ZITADEL_API}/v2/users/${userId}/unlock`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${PAT}`,
-    },
+    headers: zitadelHeaders(),
     body: JSON.stringify({}),
   });
 
