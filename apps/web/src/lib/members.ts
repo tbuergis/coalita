@@ -181,20 +181,26 @@ export async function createMemberFromForm(formData: FormData): Promise<void> {
       ? { street, zip, city, country: country || "CH" }
       : undefined;
 
+  // For minors without an email, use a non-deliverable placeholder
+  const effectiveEmail = email?.trim()
+    ? email.trim()
+    : `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}@noemail.coalita.local`;
+
   // Create Zitadel user first to get the ID
   const username = `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}`;
   const zitadelId = await createZitadelUser({
     username,
     firstName,
     lastName,
-    email,
+    email: effectiveEmail,
     emailVerified: false,
-    sendInvite: sendInvite && canLogin,
+    sendInvite: sendInvite && canLogin && !!email?.trim(),
     canLogin,
   });
 
   const member = await createMember({
     id: zitadelId,
+    email: effectiveEmail,
     first_name: firstName,
     last_name: lastName,
     email,
