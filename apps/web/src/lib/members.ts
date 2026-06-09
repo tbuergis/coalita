@@ -183,9 +183,9 @@ export async function createMemberFromForm(formData: FormData): Promise<void> {
 
   // For minors without an email, use a non-deliverable placeholder with random suffix
   const uid = Math.random().toString(36).slice(2, 10);
-  const effectiveEmail = email?.trim()
-    ? email.trim()
-    : `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${uid}@noemail.coalita.local`;
+  const trimmedEmail = email?.trim() || null;
+  const effectiveEmail = trimmedEmail
+    ?? `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${uid}@noemail.coalita.local`;
 
   // Create Zitadel user first to get the ID
   const username = `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}`;
