@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { getDb } from "./db";
-import { createZitadelUser, buildUsername, lockZitadelUser, unlockZitadelUser } from "./zitadel";
+import { createZitadelUser, lockZitadelUser, unlockZitadelUser } from "./zitadel";
+import { buildUsername } from "./username";
 import { type Member, type MembershipFee, type Guardian, type Role, type MemberRole } from "@coalita/db";
 
 const ORG_ID = process.env.ORGANIZATION_ID ?? null;
