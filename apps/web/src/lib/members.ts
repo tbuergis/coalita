@@ -238,6 +238,17 @@ export async function createMemberFromForm(formData: FormData): Promise<void> {
   redirect(`/members/${member.id}`);
 }
 
+export async function removeGuardianFromForm(formData: FormData): Promise<void> {
+  const childId = formData.get("child_id") as string;
+  const guardianId = formData.get("guardian_id") as string;
+  const db = getDb();
+  await db.query(
+    `DELETE FROM guardians WHERE guardian_id = $1 AND child_id = $2`,
+    [guardianId, childId]
+  );
+  redirect(`/members/${childId}/edit`);
+}
+
 export async function addGuardianFromForm(formData: FormData): Promise<void> {
   const childId = formData.get("child_id") as string;
   const guardianId = formData.get("guardian_id") as string;

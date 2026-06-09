@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { updateMemberFromForm, setMemberCanLogin, addGuardianFromForm } from "@/lib/members";
+import { updateMemberFromForm, setMemberCanLogin, addGuardianFromForm, removeGuardianFromForm } from "@/lib/members";
 import type { Member } from "@coalita/db";
 
 type AdultOption = { id: string; first_name: string; last_name: string; email: string };
@@ -174,7 +174,16 @@ export default function EditMemberForm({ member, adults, guardians }: Props) {
                     <Link href={`/members/${g.id}`} className="text-blue-600 hover:underline">
                       {g.last_name} {g.first_name}
                     </Link>
-                    <span className="text-gray-400 text-xs">{g.relationship}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-400 text-xs">{g.relationship}</span>
+                      <form action={removeGuardianFromForm}>
+                        <input type="hidden" name="guardian_id" value={g.id} />
+                        <input type="hidden" name="child_id" value={member.id} />
+                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">
+                          Entfernen
+                        </button>
+                      </form>
+                    </div>
                   </li>
                 ))}
               </ul>
