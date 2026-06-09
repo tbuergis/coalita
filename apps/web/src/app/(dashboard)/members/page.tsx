@@ -5,6 +5,9 @@ import { getMembers } from "@/lib/members";
 export default async function MembersPage() {
   const members = await getMembers();
 
+  const adults = members.filter((m) => !m.is_minor);
+  const minors = members.filter((m) => m.is_minor);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -16,6 +19,21 @@ export default async function MembersPage() {
           + Neues Mitglied
         </Link>
       </div>
+
+      {/* Summary chips */}
+      {members.length > 0 && (
+        <div className="flex gap-3 mb-6">
+          <span className="text-sm px-3 py-1 bg-gray-100 text-gray-600 rounded-full">
+            {members.length} Mitglieder total
+          </span>
+          <span className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded-full">
+            {adults.length} Erwachsene
+          </span>
+          <span className="text-sm px-3 py-1 bg-amber-100 text-amber-700 rounded-full">
+            {minors.length} Jugendliche
+          </span>
+        </div>
+      )}
 
       {members.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-12 text-center">
@@ -56,11 +74,29 @@ export default async function MembersPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
                     {member.membership_number}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {member.first_name} {member.last_name}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-900">
+                        {member.first_name} {member.last_name}
+                      </span>
+                      {member.is_minor && (
+                        <span className="text-xs font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                          Jugend
+                        </span>
+                      )}
+                      {!member.can_login && (
+                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                          kein Login
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {member.email}
+                    {member.email.includes("@noemail.coalita.local") ? (
+                      <span className="text-gray-300 italic">—</span>
+                    ) : (
+                      member.email
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(member.joined_at).toLocaleDateString("de-DE")}
