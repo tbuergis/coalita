@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getDb } from "./db";
-import { createZitadelUser, lockZitadelUser, unlockZitadelUser } from "./zitadel";
+import { createZitadelUser, buildUsername, lockZitadelUser, unlockZitadelUser } from "./zitadel";
 import { type Member, type MembershipFee, type Guardian, type Role, type MemberRole } from "@coalita/db";
 
 const ORG_ID = process.env.ORGANIZATION_ID ?? null;
@@ -187,17 +187,34 @@ export async function createMemberFromForm(formData: FormData): Promise<void> {
   const effectiveEmail = trimmedEmail
     ?? `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${uid}@noemail.coalita.local`;
 
-  // Create Zitadel user first to get the ID
-  const username = `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${Date.now()}`;
-  const zitadelId = await createZitadelUser({
-    username,
-    firstName,
-    lastName,
-    email: effectiveEmail,
-    emailVerified: false,
-    sendInvite: sendInvite && canLogin && !!email?.trim(),
-    canLogin,
-  });
+  // Create Zitadel user — try clean username first, fall back to suffix on conflict
+  const username = buildUsername(firstName, lastName);
+  const usernameFallback = buildUsername(firstName, lastName, Math.random().toString(36).slice(2, 6));
+  let zitadelId: string;
+  try {
+    zitadelId = await createZitadelUser({
+      username,
+      firstName,
+      lastName,
+      email: effectiveEmail,
+      sendInvite: sendInvite && canLogin && !!trimmedEmail,
+      canLogin,
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("409") || msg.includes("already exists") || msg.includes("UniqueConstraint")) {
+      zitadelId = await createZitadelUser({
+        username: usernameFallback,
+        firstName,
+        lastName,
+        email: effectiveEmail,
+        sendInvite: sendInvite && canLogin && !!trimmedEmail,
+        canLogin,
+      });
+    } else {
+      throw e;
+    }
+  }
 
   const member = await createMember({
     id: zitadelId,
