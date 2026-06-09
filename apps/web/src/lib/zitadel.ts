@@ -27,13 +27,15 @@ export function buildUsername(firstName: string, lastName: string, suffix?: stri
   const base = `${toAsciiSlug(firstName)}.${toAsciiSlug(lastName)}`;
   return suffix ? `${base}.${suffix}` : base;
 }
+
+interface CreateHumanUserParams {
   username: string;
   firstName: string;
   lastName: string;
   email: string;
   emailVerified?: boolean;
-  sendInvite?: boolean;   // sends welcome e-mail with login link
-  canLogin?: boolean;     // false = account is locked (no self-service login)
+  sendInvite?: boolean;
+  canLogin?: boolean;
 }
 
 interface ZitadelUserResponse {
