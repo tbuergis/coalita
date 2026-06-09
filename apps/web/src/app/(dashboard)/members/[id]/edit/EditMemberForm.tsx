@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { updateMemberFromForm, setMemberCanLogin } from "@/lib/members";
+import { updateMemberFromForm, setMemberCanLogin, addGuardianFromForm } from "@/lib/members";
 import type { Member } from "@coalita/db";
 
 type AdultOption = { id: string; first_name: string; last_name: string; email: string };
@@ -133,12 +133,13 @@ export default function EditMemberForm({ member, adults, guardians }: Props) {
               </div>
             )}
 
-            {/* Add guardian */}
+            {/* Add guardian — separate form so it submits independently */}
             {adults.filter((a) => !guardians.find((g) => g.id === a.id)).length > 0 && (
               <div className="mt-3 pt-3 border-t border-amber-200">
                 <p className="text-xs font-medium text-amber-800 mb-2">Erziehungsberechtigte/n hinzufügen</p>
-                <div className="flex flex-col gap-2">
-                  <select name="new_guardian_id" className={inputCls}>
+                <form action={addGuardianFromForm} className="flex flex-col gap-2">
+                  <input type="hidden" name="child_id" value={member.id} />
+                  <select name="guardian_id" required className={inputCls}>
                     <option value="">— Person auswählen —</option>
                     {adults
                       .filter((a) => !guardians.find((g) => g.id === a.id))
@@ -148,7 +149,7 @@ export default function EditMemberForm({ member, adults, guardians }: Props) {
                         </option>
                       ))}
                   </select>
-                  <select name="new_guardian_relationship" className={inputCls}>
+                  <select name="relationship" className={inputCls}>
                     <option value="Erziehungsberechtigte/r">Erziehungsberechtigte/r</option>
                     <option value="Mutter">Mutter</option>
                     <option value="Vater">Vater</option>
@@ -156,7 +157,13 @@ export default function EditMemberForm({ member, adults, guardians }: Props) {
                     <option value="Grossvater">Grossvater</option>
                     <option value="Vormund">Vormund</option>
                   </select>
-                </div>
+                  <button
+                    type="submit"
+                    className="self-start px-4 py-1.5 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors"
+                  >
+                    Hinzufügen
+                  </button>
+                </form>
               </div>
             )}
           </div>

@@ -238,6 +238,15 @@ export async function createMemberFromForm(formData: FormData): Promise<void> {
   redirect(`/members/${member.id}`);
 }
 
+export async function addGuardianFromForm(formData: FormData): Promise<void> {
+  const childId = formData.get("child_id") as string;
+  const guardianId = formData.get("guardian_id") as string;
+  const relationship = (formData.get("relationship") as string) || "Erziehungsberechtigte/r";
+  if (!guardianId) return;
+  await addGuardianRelation(guardianId, childId, relationship, false);
+  redirect(`/members/${childId}/edit`);
+}
+
 export async function updateMemberFromForm(formData: FormData): Promise<void> {
   const id = formData.get("id") as string;
   const street = formData.get("street") as string | null;
@@ -261,12 +270,6 @@ export async function updateMemberFromForm(formData: FormData): Promise<void> {
     address,
     notes: (formData.get("notes") as string) || undefined,
   });
-
-  const newGuardianId = (formData.get("new_guardian_id") as string) || null;
-  const newRelationship = (formData.get("new_guardian_relationship") as string) || "Erziehungsberechtigte/r";
-  if (newGuardianId) {
-    await addGuardianRelation(newGuardianId, id, newRelationship, false);
-  }
 
   redirect(`/members/${id}`);
 }
