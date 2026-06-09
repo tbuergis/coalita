@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { requireProfile } from "@/lib/session";
 
 const navItems = [
   { href: "/members", label: "Mitglieder" },
@@ -6,11 +8,16 @@ const navItems = [
   { href: "/settings", label: "Einstellungen" },
 ];
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { userId, hasProfile } = await requireProfile();
+
+  if (!userId) redirect("/login");
+  if (!hasProfile) redirect("/onboarding");
+
   return (
     <div className="min-h-screen flex">
       {/* Sidebar */}
