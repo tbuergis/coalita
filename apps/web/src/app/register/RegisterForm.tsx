@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { onboardingCreateProfile } from "@/lib/onboarding";
+import { registerMember } from "@/lib/registration";
 
 const inputCls =
   "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
@@ -16,7 +16,7 @@ function calcAge(dateStr: string): number | null {
   return age;
 }
 
-export default function OnboardingForm() {
+export default function RegisterForm() {
   const [persona, setPersona] = useState<"member" | "guardian" | null>(null);
   const [birthDate, setBirthDate] = useState("");
   const [ageError, setAgeError] = useState("");
@@ -27,7 +27,7 @@ export default function OnboardingForm() {
     if (!value || persona === "guardian") return;
     const age = calcAge(value);
     if (age !== null && age < 18) {
-      setAgeError("Als Mitglied müssen Sie mindestens 18 Jahre alt sein. Falls Sie ein Kind anmelden möchten, wählen Sie 'Erziehungsberechtigte/r'.");
+      setAgeError("Als Mitglied müssen Sie mindestens 18 Jahre alt sein.");
     }
   }
 
@@ -66,7 +66,7 @@ export default function OnboardingForm() {
       </div>
 
       {persona && (
-        <form action={onboardingCreateProfile} className="space-y-5">
+        <form action={registerMember} className="space-y-5">
           <input type="hidden" name="persona" value={persona} />
 
           {/* Name */}
@@ -83,6 +83,17 @@ export default function OnboardingForm() {
               </label>
               <input type="text" name="last_name" required className={inputCls} />
             </div>
+          </div>
+
+          {/* E-Mail */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              E-Mail <span className="text-red-500">*</span>
+            </label>
+            <input type="email" name="email" required className={inputCls} />
+            <p className="mt-1 text-xs text-gray-500">
+              Sie erhalten eine Einladungs-E-Mail zum Aktivieren Ihres Kontos.
+            </p>
           </div>
 
           {/* Geburtsdatum */}
@@ -137,7 +148,9 @@ export default function OnboardingForm() {
             disabled={!!ageError}
             className="w-full py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {persona === "guardian" ? "Weiter → Kinder erfassen" : "Registrierung abschliessen"}
+            {persona === "guardian"
+              ? "Weiter → Kinder erfassen"
+              : "Registrierung abschliessen"}
           </button>
         </form>
       )}

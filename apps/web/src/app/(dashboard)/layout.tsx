@@ -16,7 +16,6 @@ export default async function DashboardLayout({
   const { userId, hasProfile } = await requireProfile();
 
   if (!userId) redirect("/login");
-  if (!hasProfile) redirect("/onboarding");
 
   return (
     <div className="min-h-screen flex">

@@ -1,19 +1,19 @@
 "use client";
 
-import Link from "next/link";
-import { onboardingAddChild } from "@/lib/onboarding";
+import { useState } from "react";
+import { registerChild } from "@/lib/registration";
 
 const inputCls =
   "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
-export default function ChildrenForm({ guardianName }: { guardianName: string }) {
+export default function RegisterChildForm({ guardianId }: { guardianId: string }) {
+  const [canLogin, setCanLogin] = useState(false);
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
-      <p className="text-sm text-gray-500 mb-6">
-        Erziehungsberechtigte/r: <span className="font-medium text-gray-800">{guardianName}</span>
-      </p>
+      <form action={registerChild} className="space-y-5">
+        <input type="hidden" name="guardian_id" value={guardianId} />
 
-      <form action={onboardingAddChild} className="space-y-5">
         {/* Name */}
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -38,14 +38,6 @@ export default function ChildrenForm({ guardianName }: { guardianName: string })
           <input type="date" name="birth_date" required className={inputCls} />
         </div>
 
-        {/* E-Mail (optional) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            E-Mail <span className="text-gray-400 font-normal">(optional — für App-Zugang)</span>
-          </label>
-          <input type="email" name="email" className={inputCls} />
-        </div>
-
         {/* Beziehung */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Beziehung</label>
@@ -57,6 +49,50 @@ export default function ChildrenForm({ guardianName }: { guardianName: string })
             <option value="Grossvater">Grossvater</option>
             <option value="Vormund">Vormund</option>
           </select>
+        </div>
+
+        {/* App-Zugang */}
+        <div className="border border-amber-200 bg-amber-50 rounded-lg p-4">
+          <p className="text-sm font-medium text-amber-800 mb-3">App-Zugang für dieses Kind</p>
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="can_login"
+                value="0"
+                checked={!canLogin}
+                onChange={() => setCanLogin(false)}
+                className="accent-amber-600"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-700">Kein eigener App-Zugang</span>
+                <p className="text-xs text-gray-500">Wird über mich verwaltet</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="can_login"
+                value="1"
+                checked={canLogin}
+                onChange={() => setCanLogin(true)}
+                className="accent-amber-600"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-700">Eigener App-Zugang</span>
+                <p className="text-xs text-gray-500">Kind hat ein Mobiltelefon</p>
+              </div>
+            </label>
+          </div>
+
+          {canLogin && (
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                E-Mail des Kindes <span className="text-red-500">*</span>
+              </label>
+              <input type="email" name="email" required={canLogin} className={inputCls} />
+            </div>
+          )}
         </div>
 
         {/* Buttons */}
@@ -75,14 +111,8 @@ export default function ChildrenForm({ guardianName }: { guardianName: string })
             value="0"
             className="w-full py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
           >
-            Fertig — zum Dashboard
+            Fertig — Registrierung abschliessen
           </button>
-          <Link
-            href="/members"
-            className="text-center text-sm text-gray-400 hover:text-gray-600"
-          >
-            Überspringen (keine Kinder erfassen)
-          </Link>
         </div>
       </form>
     </div>

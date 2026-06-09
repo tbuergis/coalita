@@ -1,19 +1,15 @@
-import { redirect } from "next/navigation";
-import { requireProfile } from "@/lib/session";
-import { getOnboardingGuardianName } from "@/lib/onboarding";
-import ChildrenForm from "./ChildrenForm";
+import { registerChild } from "@/lib/registration";
+import RegisterChildForm from "./RegisterChildForm";
 
-export default async function OnboardingChildrenPage({
+export default function RegisterChildrenPage({
   searchParams,
 }: {
-  searchParams: { added?: string };
+  searchParams: { guardian: string; added?: string };
 }) {
-  const { userId, hasProfile } = await requireProfile();
-  if (!userId) redirect("/login");
-  if (!hasProfile) redirect("/onboarding");
-
-  const guardianName = await getOnboardingGuardianName();
+  const guardianId = searchParams.guardian;
   const justAdded = searchParams.added === "1";
+
+  if (!guardianId) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -23,7 +19,6 @@ export default async function OnboardingChildrenPage({
           <p className="mt-2 text-gray-500">Kinder/Jugendliche erfassen</p>
         </div>
 
-        {/* Progress */}
         <div className="flex items-center gap-2 mb-8">
           <div className="flex-1 h-1.5 rounded-full bg-blue-600" />
           <div className="flex-1 h-1.5 rounded-full bg-blue-600" />
@@ -35,7 +30,7 @@ export default async function OnboardingChildrenPage({
           </div>
         )}
 
-        <ChildrenForm guardianName={guardianName} />
+        <RegisterChildForm guardianId={guardianId} />
       </div>
     </div>
   );
