@@ -87,88 +87,6 @@ export default function EditMemberForm({ member, adults, guardians }: Props) {
           </select>
         </div>
 
-        {/* App-Zugang (nur bei Jugendlichen) */}
-        {member.is_minor && (
-          <div className="border border-amber-200 bg-amber-50 rounded-lg p-4">
-            <p className="text-sm font-medium text-amber-800 mb-3">App-Zugang</p>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  {member.can_login ? "Eigener App-Zugang aktiv" : "Kein eigener App-Zugang"}
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {member.can_login
-                    ? "Mitglied kann sich selbst einloggen"
-                    : "Wird über Erziehungsberechtigte verwaltet"}
-                </p>
-              </div>
-              <form action={setMemberCanLogin.bind(null, member.id, !member.can_login)}>
-                <button
-                  type="submit"
-                  className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                    member.can_login
-                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      : "bg-amber-600 text-white hover:bg-amber-700"
-                  }`}
-                >
-                  {member.can_login ? "Deaktivieren" : "Aktivieren"}
-                </button>
-              </form>
-            </div>
-
-            {/* Guardians */}
-            {guardians.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-amber-200">
-                <p className="text-xs font-medium text-amber-800 mb-2">Erziehungsberechtigte</p>
-                <ul className="space-y-1">
-                  {guardians.map((g) => (
-                    <li key={g.id} className="flex items-center justify-between text-sm">
-                      <Link href={`/members/${g.id}`} className="text-blue-600 hover:underline">
-                        {g.last_name} {g.first_name}
-                      </Link>
-                      <span className="text-gray-400 text-xs">{g.relationship}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Add guardian — separate form so it submits independently */}
-            {adults.filter((a) => !guardians.find((g) => g.id === a.id)).length > 0 && (
-              <div className="mt-3 pt-3 border-t border-amber-200">
-                <p className="text-xs font-medium text-amber-800 mb-2">Erziehungsberechtigte/n hinzufügen</p>
-                <form action={addGuardianFromForm} className="flex flex-col gap-2">
-                  <input type="hidden" name="child_id" value={member.id} />
-                  <select name="guardian_id" required className={inputCls}>
-                    <option value="">— Person auswählen —</option>
-                    {adults
-                      .filter((a) => !guardians.find((g) => g.id === a.id))
-                      .map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.last_name} {a.first_name}
-                        </option>
-                      ))}
-                  </select>
-                  <select name="relationship" className={inputCls}>
-                    <option value="Erziehungsberechtigte/r">Erziehungsberechtigte/r</option>
-                    <option value="Mutter">Mutter</option>
-                    <option value="Vater">Vater</option>
-                    <option value="Grossmutter">Grossmutter</option>
-                    <option value="Grossvater">Grossvater</option>
-                    <option value="Vormund">Vormund</option>
-                  </select>
-                  <button
-                    type="submit"
-                    className="self-start px-4 py-1.5 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors"
-                  >
-                    Hinzufügen
-                  </button>
-                </form>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Adresse */}
         <fieldset className="border border-gray-200 rounded-lg p-4">
           <legend className="text-sm font-medium text-gray-700 px-1">Adresse</legend>
@@ -216,6 +134,88 @@ export default function EditMemberForm({ member, adults, guardians }: Props) {
           </Link>
         </div>
       </form>
+
+      {/* App-Zugang & Erziehungsberechtigte — außerhalb des Haupt-Forms */}
+      {member.is_minor && (
+        <div className="mt-6 border border-amber-200 bg-amber-50 rounded-lg p-4">
+          <p className="text-sm font-medium text-amber-800 mb-3">App-Zugang</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                {member.can_login ? "Eigener App-Zugang aktiv" : "Kein eigener App-Zugang"}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {member.can_login
+                  ? "Mitglied kann sich selbst einloggen"
+                  : "Wird über Erziehungsberechtigte verwaltet"}
+              </p>
+            </div>
+            <form action={setMemberCanLogin.bind(null, member.id, !member.can_login)}>
+              <button
+                type="submit"
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                  member.can_login
+                    ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    : "bg-amber-600 text-white hover:bg-amber-700"
+                }`}
+              >
+                {member.can_login ? "Deaktivieren" : "Aktivieren"}
+              </button>
+            </form>
+          </div>
+
+          {/* Bestehende Erziehungsberechtigte */}
+          {guardians.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-amber-200">
+              <p className="text-xs font-medium text-amber-800 mb-2">Erziehungsberechtigte</p>
+              <ul className="space-y-1">
+                {guardians.map((g) => (
+                  <li key={g.id} className="flex items-center justify-between text-sm">
+                    <Link href={`/members/${g.id}`} className="text-blue-600 hover:underline">
+                      {g.last_name} {g.first_name}
+                    </Link>
+                    <span className="text-gray-400 text-xs">{g.relationship}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Erziehungsberechtigte/n hinzufügen */}
+          {adults.filter((a) => !guardians.find((g) => g.id === a.id)).length > 0 && (
+            <div className="mt-3 pt-3 border-t border-amber-200">
+              <p className="text-xs font-medium text-amber-800 mb-2">Erziehungsberechtigte/n hinzufügen</p>
+              <form action={addGuardianFromForm} className="flex flex-col gap-2">
+                <input type="hidden" name="child_id" value={member.id} />
+                <select name="guardian_id" required className={inputCls}>
+                  <option value="">— Person auswählen —</option>
+                  {adults
+                    .filter((a) => !guardians.find((g) => g.id === a.id))
+                    .map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.last_name} {a.first_name}
+                      </option>
+                    ))}
+                </select>
+                <select name="relationship" className={inputCls}>
+                  <option value="Erziehungsberechtigte/r">Erziehungsberechtigte/r</option>
+                  <option value="Mutter">Mutter</option>
+                  <option value="Vater">Vater</option>
+                  <option value="Grossmutter">Grossmutter</option>
+                  <option value="Grossvater">Grossvater</option>
+                  <option value="Vormund">Vormund</option>
+                </select>
+                <button
+                  type="submit"
+                  className="self-start px-4 py-1.5 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors"
+                >
+                  Hinzufügen
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
