@@ -19,10 +19,7 @@ interface Props {
 export default function EditMemberForm({ member, adults, guardians }: Props) {
   const address = member.address as { street?: string; zip?: string; city?: string; country?: string } | null;
   const birthDate = member.birth_date
-    ? (() => {
-        const d = new Date(member.birth_date!);
-        return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-      })()
+    ? String(member.birth_date).slice(0, 10)
     : "";
   const hasRealEmail = !member.email.includes("@noemail.coalita.local");
 
