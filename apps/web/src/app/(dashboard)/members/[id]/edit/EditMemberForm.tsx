@@ -134,12 +134,12 @@ export default function EditMemberForm({ member, adults, guardians }: Props) {
             )}
 
             {/* Add guardian */}
-            {adults.length > 0 && (
+            {adults.filter((a) => !guardians.find((g) => g.id === a.id)).length > 0 && (
               <div className="mt-3 pt-3 border-t border-amber-200">
                 <p className="text-xs font-medium text-amber-800 mb-2">Erziehungsberechtigte/n hinzufügen</p>
-                <div className="flex gap-2">
-                  <select name="new_guardian_id" className={`${inputCls} flex-1`}>
-                    <option value="">— auswählen —</option>
+                <div className="flex flex-col gap-2">
+                  <select name="new_guardian_id" className={inputCls}>
+                    <option value="">— Person auswählen —</option>
                     {adults
                       .filter((a) => !guardians.find((g) => g.id === a.id))
                       .map((a) => (
@@ -147,6 +147,14 @@ export default function EditMemberForm({ member, adults, guardians }: Props) {
                           {a.last_name} {a.first_name}
                         </option>
                       ))}
+                  </select>
+                  <select name="new_guardian_relationship" className={inputCls}>
+                    <option value="Erziehungsberechtigte/r">Erziehungsberechtigte/r</option>
+                    <option value="Mutter">Mutter</option>
+                    <option value="Vater">Vater</option>
+                    <option value="Grossmutter">Grossmutter</option>
+                    <option value="Grossvater">Grossvater</option>
+                    <option value="Vormund">Vormund</option>
                   </select>
                 </div>
               </div>

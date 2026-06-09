@@ -262,6 +262,12 @@ export async function updateMemberFromForm(formData: FormData): Promise<void> {
     notes: (formData.get("notes") as string) || undefined,
   });
 
+  const newGuardianId = (formData.get("new_guardian_id") as string) || null;
+  const newRelationship = (formData.get("new_guardian_relationship") as string) || "Erziehungsberechtigte/r";
+  if (newGuardianId) {
+    await addGuardianRelation(newGuardianId, id, newRelationship, false);
+  }
+
   redirect(`/members/${id}`);
 }
 
