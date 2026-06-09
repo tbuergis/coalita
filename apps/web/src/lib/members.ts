@@ -238,6 +238,33 @@ export async function createMemberFromForm(formData: FormData): Promise<void> {
   redirect(`/members/${member.id}`);
 }
 
+export async function updateMemberFromForm(formData: FormData): Promise<void> {
+  const id = formData.get("id") as string;
+  const street = formData.get("street") as string | null;
+  const zip = formData.get("zip") as string | null;
+  const city = formData.get("city") as string | null;
+  const country = formData.get("country") as string | null;
+  const emailRaw = (formData.get("email") as string)?.trim() || null;
+
+  const address =
+    street && zip && city
+      ? { street, zip, city, country: country || "CH" }
+      : undefined;
+
+  await updateMember(id, {
+    first_name: formData.get("first_name") as string,
+    last_name: formData.get("last_name") as string,
+    ...(emailRaw ? { email: emailRaw } : {}),
+    phone: (formData.get("phone") as string) || undefined,
+    birth_date: (formData.get("birth_date") as string) || undefined,
+    status: (formData.get("status") as Member["status"]) || undefined,
+    address,
+    notes: (formData.get("notes") as string) || undefined,
+  });
+
+  redirect(`/members/${id}`);
+}
+
 export async function updateMember(
   id: string,
   data: Partial<Pick<Member, "first_name" | "last_name" | "email" | "phone" | "birth_date" | "address" | "status" | "avatar_url" | "notes">>
