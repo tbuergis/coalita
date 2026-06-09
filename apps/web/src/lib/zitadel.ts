@@ -38,8 +38,10 @@ export async function createZitadelUser(params: CreateHumanUserParams): Promise<
     },
     email: {
       email: params.email,
-      isVerified: params.emailVerified ?? false,
-      ...(params.sendInvite ? { sendCode: {} } : {}),
+      ...(params.sendInvite
+        ? { sendCode: {} }
+        : { isVerified: false }
+      ),
     },
   };
 
