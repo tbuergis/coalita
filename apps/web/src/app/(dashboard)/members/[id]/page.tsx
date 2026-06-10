@@ -4,6 +4,7 @@ import { Badge } from "@coalita/ui";
 import { getMember, getMemberFees, getChildrenOf } from "@/lib/members";
 import { getDb } from "@/lib/db";
 import type { Member } from "@coalita/db";
+import DeleteMemberButton from "./DeleteMemberButton";
 
 interface MemberDetailPageProps {
   params: { id: string };
@@ -72,6 +73,10 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
               >
                 Bearbeiten
               </Link>
+              <DeleteMemberButton
+                memberId={member.id}
+                memberName={`${member.first_name} ${member.last_name}`}
+              />
             </div>
           </div>
 

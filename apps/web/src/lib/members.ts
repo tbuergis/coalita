@@ -237,6 +237,16 @@ export async function createMemberFromForm(formData: FormData): Promise<void> {
   redirect(`/members/${member.id}`);
 }
 
+export async function deleteMember(formData: FormData): Promise<void> {
+  const id = formData.get("id") as string;
+  const db = getDb();
+  await db.query(`DELETE FROM guardians WHERE guardian_id = $1 OR child_id = $1`, [id]);
+  await db.query(`DELETE FROM member_roles WHERE profile_id = $1`, [id]);
+  await db.query(`DELETE FROM membership_fees WHERE member_id = $1`, [id]);
+  await db.query(`DELETE FROM profiles WHERE id = $1`, [id]);
+  redirect("/members");
+}
+
 export async function removeGuardianFromForm(formData: FormData): Promise<void> {
   const childId = formData.get("child_id") as string;
   const guardianId = formData.get("guardian_id") as string;
