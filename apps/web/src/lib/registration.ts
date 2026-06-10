@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { createMember, addGuardianRelation } from "./members";
 import { createZitadelUser } from "./zitadel";
 import { buildUsername } from "./username";
+import { getCurrentUserId } from "./session";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./auth";
 import type { Member } from "@coalita/db";
 
 export async function registerMember(formData: FormData): Promise<void> {
@@ -75,6 +78,57 @@ export async function registerMember(formData: FormData): Promise<void> {
     redirect(`/register/children?guardian=${zitadelId}`);
   } else {
     redirect("/register/success");
+  }
+}
+
+export async function completeRegistration(formData: FormData): Promise<void> {
+  const userId = await getCurrentUserId();
+  if (!userId) redirect("/login");
+
+  const session = await getServerSession(authOptions);
+  const sessionEmail = (session?.user as { email?: string })?.email ?? "";
+  const sessionName = (session?.user as { name?: string })?.name ?? "";
+
+  const persona = formData.get("persona") as string;
+  const isGuardian = persona === "guardian";
+
+  const firstName = (formData.get("first_name") as string) || sessionName.split(" ")[0] || "";
+  const lastName = (formData.get("last_name") as string) || sessionName.split(" ").slice(1).join(" ") || "";
+  const birthDate = (formData.get("birth_date") as string) || undefined;
+
+  if (!isGuardian && birthDate) {
+    const dob = new Date(birthDate);
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 18);
+    if (dob > cutoff) {
+      throw new Error("Mindestalter 18 Jahre nicht erreicht.");
+    }
+  }
+
+  const street = formData.get("street") as string | null;
+  const zip = formData.get("zip") as string | null;
+  const city = formData.get("city") as string | null;
+  const country = formData.get("country") as string | null;
+  const address = street && zip && city
+    ? { street, zip, city, country: country || "CH" }
+    : undefined;
+
+  await createMember({
+    id: userId,
+    first_name: firstName,
+    last_name: lastName,
+    email: sessionEmail,
+    phone: (formData.get("phone") as string) || undefined,
+    birth_date: birthDate,
+    status: "active" as Member["status"],
+    address,
+    can_login: true,
+  });
+
+  if (isGuardian) {
+    redirect(`/register/children?guardian=${userId}`);
+  } else {
+    redirect("/members");
   }
 }
 
