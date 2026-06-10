@@ -5,12 +5,18 @@ import { getMember } from "@/lib/members";
 import { getCurrentUserId } from "@/lib/session";
 import CompleteRegistrationForm from "./CompleteRegistrationForm";
 
-export default async function RegisterCompletePage() {
+export default async function RegisterCompletePage({
+  searchParams,
+}: {
+  searchParams: { persona?: string };
+}) {
   const userId = await getCurrentUserId();
   if (!userId) redirect("/login");
 
   const existing = await getMember(userId);
   if (existing) redirect("/members");
+
+  const persona = searchParams.persona === "guardian" ? "guardian" : "member";
 
   const session = await getServerSession(authOptions);
   const user = session?.user as { name?: string; email?: string } | undefined;
@@ -30,13 +36,14 @@ export default async function RegisterCompletePage() {
 
         <div className="flex items-center gap-2 mb-8">
           <div className="flex-1 h-1.5 rounded-full bg-blue-600" />
-          <div className="flex-1 h-1.5 rounded-full bg-gray-200" />
+          <div className="flex-1 h-1.5 rounded-full bg-blue-600" />
         </div>
 
         <CompleteRegistrationForm
           defaultFirstName={firstName}
           defaultLastName={lastName}
           email={email}
+          defaultPersona={persona}
         />
       </div>
     </div>

@@ -17,8 +17,7 @@ function calcAge(dateStr: string): number | null {
   return age;
 }
 
-export default function RegisterForm() {
-  const [persona, setPersona] = useState<"member" | "guardian" | null>(null);
+export default function RegisterForm({ persona }: { persona: "member" | "guardian" }) {
   const [birthDate, setBirthDate] = useState("");
   const [ageError, setAgeError] = useState("");
 
@@ -32,6 +31,8 @@ export default function RegisterForm() {
     }
   }
 
+  const callbackUrl = `/register/complete?persona=${persona}`;
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
 
@@ -41,7 +42,7 @@ export default function RegisterForm() {
         <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => signIn("zitadel", { callbackUrl: "/register/complete" })}
+            onClick={() => signIn("zitadel", { callbackUrl })}
             className="flex items-center justify-center gap-3 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -54,7 +55,7 @@ export default function RegisterForm() {
           </button>
           <button
             type="button"
-            onClick={() => signIn("zitadel", { callbackUrl: "/register/complete" })}
+            onClick={() => signIn("zitadel", { callbackUrl })}
             className="flex items-center justify-center gap-3 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -64,7 +65,7 @@ export default function RegisterForm() {
           </button>
           <button
             type="button"
-            onClick={() => signIn("zitadel", { callbackUrl: "/register/complete" })}
+            onClick={() => signIn("zitadel", { callbackUrl })}
             className="flex items-center justify-center gap-3 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2">
@@ -74,7 +75,7 @@ export default function RegisterForm() {
           </button>
           <button
             type="button"
-            onClick={() => signIn("zitadel", { callbackUrl: "/register/complete" })}
+            onClick={() => signIn("zitadel", { callbackUrl })}
             className="flex items-center justify-center gap-3 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#00A4EF">
@@ -93,126 +94,89 @@ export default function RegisterForm() {
         </div>
       </div>
 
-      {/* Persona choice */}
-      <div className="mb-6">
-        <p className="text-sm font-medium text-gray-700 mb-3">Ich registriere mich als…</p>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => { setPersona("member"); setAgeError(""); }}
-            className={`p-4 rounded-lg border-2 text-left transition-colors ${
-              persona === "member"
-                ? "border-blue-600 bg-blue-50"
-                : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <p className="text-sm font-semibold text-gray-900">Mitglied</p>
-            <p className="text-xs text-gray-500 mt-1">Ich bin 18+ Jahre alt</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => { setPersona("guardian"); setAgeError(""); }}
-            className={`p-4 rounded-lg border-2 text-left transition-colors ${
-              persona === "guardian"
-                ? "border-blue-600 bg-blue-50"
-                : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <p className="text-sm font-semibold text-gray-900">Erziehungsberechtigte/r</p>
-            <p className="text-xs text-gray-500 mt-1">Ich melde Kinder/Jugendliche an</p>
-          </button>
+      {/* E-Mail Formular */}
+      <form action={registerMember} className="space-y-5">
+        <input type="hidden" name="persona" value={persona} />
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Vorname <span className="text-red-500">*</span>
+            </label>
+            <input type="text" name="first_name" required className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nachname <span className="text-red-500">*</span>
+            </label>
+            <input type="text" name="last_name" required className={inputCls} />
+          </div>
         </div>
-      </div>
 
-      {persona && (
-        <form action={registerMember} className="space-y-5">
-          <input type="hidden" name="persona" value={persona} />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            E-Mail <span className="text-red-500">*</span>
+          </label>
+          <input type="email" name="email" required className={inputCls} />
+          <p className="mt-1 text-xs text-gray-500">
+            Sie erhalten eine Einladungs-E-Mail zum Aktivieren Ihres Kontos.
+          </p>
+        </div>
 
-          {/* Name */}
-          <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Geburtsdatum <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="date"
+            name="birth_date"
+            required
+            value={birthDate}
+            onChange={(e) => handleBirthDate(e.target.value)}
+            className={`${inputCls} ${ageError ? "border-red-400" : ""}`}
+          />
+          {ageError && <p className="mt-1 text-xs text-red-600">{ageError}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+          <input type="tel" name="phone" className={inputCls} />
+        </div>
+
+        <fieldset className="border border-gray-200 rounded-lg p-4">
+          <legend className="text-sm font-medium text-gray-700 px-1">Adresse</legend>
+          <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Vorname <span className="text-red-500">*</span>
-              </label>
-              <input type="text" name="first_name" required className={inputCls} />
+              <label className="block text-sm text-gray-600 mb-1">Strasse</label>
+              <input type="text" name="street" className={inputCls} />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">PLZ</label>
+                <input type="text" name="zip" className={inputCls} />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm text-gray-600 mb-1">Ort</label>
+                <input type="text" name="city" className={inputCls} />
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nachname <span className="text-red-500">*</span>
-              </label>
-              <input type="text" name="last_name" required className={inputCls} />
+              <label className="block text-sm text-gray-600 mb-1">Land</label>
+              <input type="text" name="country" defaultValue="CH" className={inputCls} />
             </div>
           </div>
+        </fieldset>
 
-          {/* E-Mail */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              E-Mail <span className="text-red-500">*</span>
-            </label>
-            <input type="email" name="email" required className={inputCls} />
-            <p className="mt-1 text-xs text-gray-500">
-              Sie erhalten eine Einladungs-E-Mail zum Aktivieren Ihres Kontos.
-            </p>
-          </div>
-
-          {/* Geburtsdatum */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Geburtsdatum <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              name="birth_date"
-              required
-              value={birthDate}
-              onChange={(e) => handleBirthDate(e.target.value)}
-              className={`${inputCls} ${ageError ? "border-red-400" : ""}`}
-            />
-            {ageError && <p className="mt-1 text-xs text-red-600">{ageError}</p>}
-          </div>
-
-          {/* Telefon */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
-            <input type="tel" name="phone" className={inputCls} />
-          </div>
-
-          {/* Adresse */}
-          <fieldset className="border border-gray-200 rounded-lg p-4">
-            <legend className="text-sm font-medium text-gray-700 px-1">Adresse</legend>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Strasse</label>
-                <input type="text" name="street" className={inputCls} />
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">PLZ</label>
-                  <input type="text" name="zip" className={inputCls} />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm text-gray-600 mb-1">Ort</label>
-                  <input type="text" name="city" className={inputCls} />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Land</label>
-                <input type="text" name="country" defaultValue="CH" className={inputCls} />
-              </div>
-            </div>
-          </fieldset>
-
-          <button
-            type="submit"
-            disabled={!!ageError}
-            className="w-full py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {persona === "guardian"
-              ? "Weiter → Kinder erfassen"
-              : "Registrierung abschliessen"}
-          </button>
-        </form>
-      )}
+        <button
+          type="submit"
+          disabled={!!ageError}
+          className="w-full py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {persona === "guardian"
+            ? "Weiter → Kinder erfassen"
+            : "Registrierung abschliessen"}
+        </button>
+      </form>
     </div>
   );
 }
