@@ -66,6 +66,20 @@ export async function createZitadelUser(params: CreateHumanUserParams): Promise<
   return data.userId;
 }
 
+export async function findZitadelUserByEmail(email: string): Promise<string | null> {
+  const resp = await fetch(`${ZITADEL_API}/v2/users`, {
+    method: "POST",
+    headers: zitadelHeaders(),
+    body: JSON.stringify({
+      queries: [{ emailQuery: { emailAddress: email, method: "TEXT_QUERY_METHOD_EQUALS" } }],
+    }),
+  });
+
+  if (!resp.ok) return null;
+  const data = await resp.json() as { result?: { userId: string }[] };
+  return data.result?.[0]?.userId ?? null;
+}
+
 export async function updateZitadelProfile(userId: string, firstName: string, lastName: string): Promise<void> {
   const resp = await fetch(`${ZITADEL_API}/v2/users/${userId}/profile`, {
     method: "PATCH",
