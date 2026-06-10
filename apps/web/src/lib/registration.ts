@@ -15,14 +15,24 @@ export async function registerMember(formData: FormData): Promise<void> {
   const localPart = email.split("@")[0];
 
   const username = buildUsername(localPart, "");
-  const usernameFallback = buildUsername(localPart, Math.random().toString(36).slice(2, 6));
 
   try {
     await createZitadelUser({ username, firstName: localPart, lastName: "-", email, sendInvite: true, canLogin: true });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
+    // Username conflict: try with suffix but same email
     if (msg.includes("409") || msg.includes("already exists")) {
-      await createZitadelUser({ username: usernameFallback, firstName: localPart, lastName: "-", email, sendInvite: true, canLogin: true });
+      const usernameFallback = buildUsername(localPart, Math.random().toString(36).slice(2, 6));
+      try {
+        await createZitadelUser({ username: usernameFallback, firstName: localPart, lastName: "-", email, sendInvite: true, canLogin: true });
+      } catch (e2) {
+        const msg2 = e2 instanceof Error ? e2.message : "";
+        // Email already registered — tell the user
+        if (msg2.includes("409") || msg2.includes("already exists") || msg2.includes("email")) {
+          redirect("/login?error=EmailAlreadyExists");
+        }
+        throw e2;
+      }
     } else throw e;
   }
 
