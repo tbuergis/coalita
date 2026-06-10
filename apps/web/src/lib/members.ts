@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getDb } from "./db";
-import { createZitadelUser, lockZitadelUser, unlockZitadelUser } from "./zitadel";
+import { createZitadelUser, lockZitadelUser, unlockZitadelUser, updateZitadelEmail, deleteZitadelUser } from "./zitadel";
 import { buildUsername } from "./username";
 import { type Member, type MembershipFee, type Guardian, type Role, type MemberRole } from "@coalita/db";
 
@@ -244,6 +244,8 @@ export async function deleteMember(formData: FormData): Promise<void> {
   await db.query(`DELETE FROM member_roles WHERE profile_id = $1`, [id]);
   await db.query(`DELETE FROM membership_fees WHERE member_id = $1`, [id]);
   await db.query(`DELETE FROM profiles WHERE id = $1`, [id]);
+  // Best-effort: ignore if user was created via social login (already deleted or not managed by us)
+  try { await deleteZitadelUser(id); } catch { /* ignore */ }
   redirect("/members");
 }
 
@@ -280,6 +282,8 @@ export async function updateMemberFromForm(formData: FormData): Promise<void> {
       ? { street, zip, city, country: country || "CH" }
       : undefined;
 
+  const current = await getMember(id);
+
   await updateMember(id, {
     first_name: formData.get("first_name") as string,
     last_name: formData.get("last_name") as string,
@@ -290,6 +294,12 @@ export async function updateMemberFromForm(formData: FormData): Promise<void> {
     address,
     notes: (formData.get("notes") as string) || undefined,
   });
+
+  // Sync email to Zitadel if it changed and is a real address
+  if (emailRaw && current && emailRaw !== current.email &&
+      !emailRaw.includes("@noemail.coalita.local")) {
+    try { await updateZitadelEmail(id, emailRaw); } catch { /* ignore for social-login users */ }
+  }
 
   redirect(`/members/${id}`);
 }
