@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createMember, addGuardianRelation } from "./members";
-import { createZitadelUser } from "./zitadel";
+import { createZitadelUser, updateZitadelEmail } from "./zitadel";
 import { buildUsername } from "./username";
 import { getCurrentUserId } from "./session";
 import { getServerSession } from "next-auth";
@@ -124,6 +124,11 @@ export async function completeRegistration(formData: FormData): Promise<void> {
     address,
     can_login: true,
   });
+
+  // Mark email as verified in Zitadel — Google/Apple already verified it
+  if (sessionEmail) {
+    try { await updateZitadelEmail(userId, sessionEmail); } catch { /* ignore */ }
+  }
 
   if (isGuardian) {
     redirect(`/register/children?guardian=${userId}`);
