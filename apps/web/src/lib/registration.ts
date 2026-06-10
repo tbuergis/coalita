@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createMember, addGuardianRelation } from "./members";
-import { createZitadelUser, updateZitadelEmail } from "./zitadel";
+import { createZitadelUser, updateZitadelEmail, updateZitadelProfile } from "./zitadel";
 import { buildUsername } from "./username";
 import { getCurrentUserId } from "./session";
 import { getServerSession } from "next-auth";
@@ -12,21 +12,20 @@ import type { Member } from "@coalita/db";
 export async function registerMember(formData: FormData): Promise<void> {
   const email = formData.get("email") as string;
   const persona = formData.get("persona") as string;
+  const localPart = email.split("@")[0];
 
-  // Create Zitadel user with a placeholder username — invite email triggers first login
-  const username = buildUsername(email.split("@")[0], "");
-  const usernameFallback = buildUsername(email.split("@")[0], Math.random().toString(36).slice(2, 6));
+  const username = buildUsername(localPart, "");
+  const usernameFallback = buildUsername(localPart, Math.random().toString(36).slice(2, 6));
 
   try {
-    await createZitadelUser({ username, firstName: "", lastName: "", email, sendInvite: true, canLogin: true });
+    await createZitadelUser({ username, firstName: localPart, lastName: "-", email, sendInvite: true, canLogin: true });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
     if (msg.includes("409") || msg.includes("already exists")) {
-      await createZitadelUser({ username: usernameFallback, firstName: "", lastName: "", email, sendInvite: true, canLogin: true });
+      await createZitadelUser({ username: usernameFallback, firstName: localPart, lastName: "-", email, sendInvite: true, canLogin: true });
     } else throw e;
   }
 
-  // Profile is created after first login via completeRegistration
   redirect(`/register/success?persona=${persona}`);
 }
 
@@ -74,7 +73,8 @@ export async function completeRegistration(formData: FormData): Promise<void> {
     can_login: true,
   });
 
-  // Mark email as verified in Zitadel — Google/Apple already verified it
+  // Sync name and verified email to Zitadel
+  try { await updateZitadelProfile(userId, firstName, lastName); } catch { /* ignore */ }
   if (sessionEmail) {
     try { await updateZitadelEmail(userId, sessionEmail); } catch { /* ignore */ }
   }
