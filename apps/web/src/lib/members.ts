@@ -219,10 +219,9 @@ export async function createMemberFromForm(formData: FormData): Promise<void> {
 
   const member = await createMember({
     id: zitadelId,
-    email: effectiveEmail,
     first_name: firstName,
     last_name: lastName,
-    email,
+    email: effectiveEmail,
     phone: (formData.get("phone") as string) || undefined,
     birth_date: birthDate,
     status: (formData.get("status") as Member["status"]) || "active",
