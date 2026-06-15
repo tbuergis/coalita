@@ -15,7 +15,7 @@ default:
 build:
   stage: build
   script:
-    - pnpm build --filter=web
+    - pnpm build --filter=@coalita/db --filter=@coalita/ui --filter=web
   cache:
     key:
       files:
