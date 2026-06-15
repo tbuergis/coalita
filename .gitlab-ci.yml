@@ -5,6 +5,14 @@ stages:
 variables:
   NODE_VERSION: "24"
   PNPM_VERSION: "9"
+  DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
+  NEXTAUTH_URL: "https://placeholder.example.com"
+  NEXTAUTH_SECRET: "placeholder-secret-for-ci-build-only"
+  ZITADEL_ISSUER: "https://placeholder.zitadel.cloud"
+  ZITADEL_CLIENT_ID: "placeholder"
+  ZITADEL_CLIENT_SECRET: "placeholder"
+  ZITADEL_PAT: "placeholder"
+  ORGANIZATION_ID: "00000000-0000-0000-0000-000000000000"
 
 default:
   image: node:24-slim
