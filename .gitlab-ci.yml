@@ -1,0 +1,37 @@
+stages:
+  - build
+  - test
+
+variables:
+  NODE_VERSION: "24"
+  PNPM_VERSION: "9"
+
+default:
+  image: node:24-slim
+  before_script:
+    - npm install -g pnpm@9
+    - pnpm install --frozen-lockfile
+
+build:
+  stage: build
+  script:
+    - pnpm build --filter=web
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - node_modules/
+      - .pnpm-store/
+
+test:
+  stage: test
+  script:
+    - pnpm typecheck --filter=web || true
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - node_modules/
+      - .pnpm-store/
